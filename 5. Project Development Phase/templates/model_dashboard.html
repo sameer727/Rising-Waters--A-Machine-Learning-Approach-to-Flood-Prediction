@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Model Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in">
+      <div class="hero-content">
+        <h1 class="hero-title">Model <span>Training Dashboard</span></h1>
+        <p class="hero-subtitle">Comprehensive metrics, comparisons, and features evaluation of the classifiers trained on the 1,000,000-row historical flood dataset.</p>
+      </div>
+
+      <div class="hero-features">
+        <div class="feature-box" style="text-align: center;">
+          <div class="feature-icon">🏆</div>
+          <h3 class="feature-title">Best Model Selected</h3>
+          <h2 style="font-size: 2.2rem; margin: 0.5rem 0; color: var(--accent-blue);">{{ meta['best_model'] }}</h2>
+          <p class="feature-desc">Chosen for its high generalization capability, F1-Score balance, and resilience to climate data fluctuations.</p>
+        </div>
+        <div class="feature-box" style="text-align: center;">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">Overall Accuracy</h3>
+          <h2 style="font-size: 2.2rem; margin: 0.5rem 0; color: var(--accent-neon-green);">{{ (meta['test_metrics']['Accuracy'] * 100) | round(2) }}%</h2>
+          <p class="feature-desc">High fidelity classification performance on stratified out-of-sample testing records.</p>
+        </div>
+        <div class="feature-box" style="text-align: center;">
+          <div class="feature-icon">💾</div>
+          <h3 class="feature-title">Dataset Scale</h3>
+          <h2 style="font-size: 2.2rem; margin: 0.5rem 0; color: var(--accent-cyan);">1,000,000</h2>
+          <p class="feature-desc">Records representing climate readings, soil, drainage levels, and river stage heights.</p>
+        </div>
+      </div>
+
+      <!-- Models Comparison -->
+      <div class="glass-card" style="margin-bottom: 3rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; text-align: left; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+          📊 Classifiers Comparison Summary
+        </h2>
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 1rem; color: var(--text-secondary);">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--glass-border); color: var(--text-primary);">
+                <th style="padding: 1rem; font-weight: 700;">Classifier Model</th>
+                <th style="padding: 1rem; font-weight: 700; text-align: center;">Test Accuracy</th>
+                <th style="padding: 1rem; font-weight: 700; text-align: center;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for name, metrics in meta['all_models_comparison'].items() %}
+              <tr style="border-bottom: 1px solid var(--glass-border); transition: background-color 0.2s;">
+                <td style="padding: 1rem; font-weight: 600; color: var(--text-primary);">{{ name }}</td>
+                <td style="padding: 1rem; text-align: center; font-weight: 700; color: var(--text-primary);">{{ (metrics['Accuracy'] * 100) | round(2) }}%</td>
+                <td style="padding: 1rem; text-align: center;">
+                  {% if name == meta['best_model'] %}
+                    <span class="status-pill safe" style="font-size: 0.7rem; padding: 4px 8px;">Active Deployment</span>
+                  {% else %}
+                    <span class="status-pill" style="font-size: 0.7rem; padding: 4px 8px; background: rgba(255,255,255,0.05); color: var(--text-secondary);">Standby</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              <tr style="border-bottom: 1px solid var(--glass-border); opacity: 0.6;">
+                <td style="padding: 1rem; font-weight: 600;">K-Nearest Neighbors</td>
+                <td style="padding: 1rem; text-align: center; font-style: italic;">Skipped</td>
+                <td style="padding: 1rem; text-align: center;">
+                  <span class="status-pill" style="font-size: 0.7rem; padding: 4px 8px; background: rgba(239, 68, 68, 0.1); color: #f87171;">O(N) Bypass</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Evaluation Plots -->
+      <div class="context-grid" style="margin-bottom: 2rem;">
+        <div class="context-card" style="text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3>📈 Receiver Operating Characteristic (ROC)</h3>
+            <p>Illustrates the diagnostic trade-off between True Positive and False Positive rates for the selected XGBoost classifier.</p>
+          </div>
+          <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 0.5rem; margin-top: 1rem;">
+            <img src="{{ url_for('static', filename='roc_curve.png') }}" alt="ROC Curve" style="width: 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+          </div>
+        </div>
+
+        <div class="context-card" style="text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h3>🔥 Permutation Feature Importance</h3>
+            <p>Shows the relative predictive contribution of each environmental and hydrological feature used during classification.</p>
+          </div>
+          <div style="background: rgba(0,0,0,0.15); border-radius: 8px; padding: 0.5rem; margin-top: 1rem;">
+            <img src="{{ url_for('static', filename='feature_importance.png') }}" alt="Feature Importance" style="width: 100%; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+</body>
+</html>

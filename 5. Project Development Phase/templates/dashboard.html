@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in">
+      <div class="hero-content" style="text-align: left; max-width: 100%; margin-bottom: 2rem;">
+        <h1 class="hero-title" style="font-size: 2.2rem; margin-bottom: 0.5rem;">User Portal: <span>{{ session['user_name'] }}</span></h1>
+        <p class="hero-subtitle" style="font-size: 1.05rem; margin-bottom: 0; text-align: left;">Role: <strong>{{ session['role'] }}</strong> | Organization: <strong>{{ user['Organization'] or 'N/A' }}</strong></p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="location-status {{ 'success' if category == 'success' else 'error' }}" style="margin-bottom: 1.5rem; display: block; text-align: left;">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="hero-features" style="margin-bottom: 3rem;">
+        <div class="feature-box">
+          <div class="feature-icon">👤</div>
+          <h3 class="feature-title">Account Details</h3>
+          <p class="feature-desc">Email: {{ user['Email'] }}<br>Phone: {{ user['Phone_Number'] or 'N/A' }}</p>
+        </div>
+        <div class="feature-box">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">Prediction Logs</h3>
+          <p class="feature-desc">
+            {% if session['role'] == 'Admin' %}
+              Total Global Telemetry: <strong>{{ stats['total_runs'] }}</strong> records
+            {% else %}
+              My Logged Telemetry: <strong>{{ stats['total_runs'] }}</strong> records
+            {% endif %}
+          </p>
+        </div>
+        <div class="feature-box">
+          <div class="feature-icon">🛡️</div>
+          <h3 class="feature-title">Active Security</h3>
+          <p class="feature-desc">Logged in via secure hashed session tokens. Organization level encryption active.</p>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <h2 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+          ⚡ Available Operations
+        </h2>
+        <div class="hero-features" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 0;">
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" style="text-decoration: none; color: inherit;">
+              <div class="feature-box" style="padding: 1.5rem; height: 100%; border-color: rgba(59, 130, 246, 0.2);">
+                <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--accent-blue);">🛰️ Run Prediction</h4>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Enter climate telemetry and run predictions on our trained XGBoost classifier.</p>
+              </div>
+            </a>
+          {% endif %}
+
+          <a href="/history" style="text-decoration: none; color: inherit;">
+            <div class="feature-box" style="padding: 1.5rem; height: 100%; border-color: rgba(6, 182, 212, 0.2);">
+              <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--accent-cyan);">⏳ View Run Logs</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                {% if session['role'] == 'Admin' %}
+                  Browse all predictions made globally across the system.
+                {% elif session['role'] == 'Disaster Management Officer' %}
+                  View prediction summaries and meteorological reports.
+                {% else %}
+                  Browse your personal list of logged weather runs.
+                {% endif %}
+              </p>
+            </div>
+          </a>
+
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" style="text-decoration: none; color: inherit;">
+              <div class="feature-box" style="padding: 1.5rem; height: 100%; border-color: rgba(245, 158, 11, 0.2);">
+                <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--accent-amber);">👥 Manage Users</h4>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Admin control panel to delete user profiles and edit organization roles.</p>
+              </div>
+            </a>
+
+            <a href="/model-dashboard" style="text-decoration: none; color: inherit;">
+              <div class="feature-box" style="padding: 1.5rem; height: 100%; border-color: rgba(16, 185, 129, 0.2);">
+                <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--accent-neon-green);">⚙️ Model Metrics</h4>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">Analyze training details, test accuracies, ROC curve, and feature importances.</p>
+              </div>
+            </a>
+          {% endif %}
+
+          <a href="/profile" style="text-decoration: none; color: inherit;">
+            <div class="feature-box" style="padding: 1.5rem; height: 100%; border-color: rgba(255, 255, 255, 0.1);">
+              <h4 style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-primary);">⚙️ Profile Settings</h4>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);">Manage your contact details, view registration times, and change your password.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+</body>
+</html>

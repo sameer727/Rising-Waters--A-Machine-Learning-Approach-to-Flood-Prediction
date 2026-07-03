@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Flood Hazard Warning</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in">
+      <div class="result-card danger">
+        <div class="result-icon">⚠️</div>
+        <h1 class="result-status">FLOOD RISK DETECTED: {{ prob }}%</h1>
+        <p class="result-message">Based on the provided meteorological telemetry, our machine learning model has identified an estimated <strong>{{ prob }}%</strong> probability of localized flood hazards.</p>
+        
+        <div class="info-section">
+          <h2 class="info-title">🚨 Critical Mitigation & Safety Measures</h2>
+          <ul class="info-list">
+            <li><strong>Evacuation Routes:</strong> Familiarize yourself with local evacuation routes and emergency shelters.</li>
+            <li><strong>Safety Drills:</strong> Practice flood preparedness and safety drills with family members.</li>
+            <li><strong>Emergency Kit:</strong> Ensure your emergency kit is fully stocked (non-perishable food, water, flashlights, batteries, first aid kit).</li>
+            <li><strong>Document Safety:</strong> Store important documents and valuables in waterproof containers or move them to higher levels.</li>
+            <li><strong>Real-time Telemetry:</strong> Monitor local radio or TV stations for official weather bulletins, updates, and evacuation notices.</li>
+            <li><strong>Utility Management:</strong> Disconnect electrical appliances and turn off main power and gas lines if advised to do so.</li>
+          </ul>
+        </div>
+        
+        <div class="result-actions">
+          <a href="/Predict" class="btn-primary">Predict Again</a>
+          <a href="/" class="btn-secondary">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+</body>
+</html>

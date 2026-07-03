@@ -1,0 +1,263 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Prediction Interface</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in">
+      <div class="prediction-layout-grid">
+        <!-- Left Section: Climate Input Form -->
+        <div class="glass-card form-section-card">
+          <h1 class="form-title">Climate Parameter Form</h1>
+          <p class="form-subtitle">Enter local atmospheric values or auto-detect them based on your current location.</p>
+          
+          <div class="location-detect-wrapper">
+            <button type="button" id="btn-detect-location" class="btn-location">📍 Auto-Detect Local Climate</button>
+            <div id="location-status" class="location-status">Click anywhere on the map or click auto-detect to fetch climate coordinates.</div>
+            <div id="map-container" style="margin-top: 1rem; width: 100%;"><div id="map" style="height: 280px; border-radius: 12px; border: 1px solid var(--glass-border);"></div></div>
+            <div id="chart-container" style="display: none; margin-top: 1rem; width: 100%; background: rgba(30, 41, 59, 0.4); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem;">
+              <h3 style="font-size: 0.85rem; font-weight: 600; color: #9ca3af; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-family: inherit;">
+                📊 <span id="chart-title-text">Monthly Precipitation Trend (mm)</span>
+              </h3>
+              <div style="position: relative; height: 180px; width: 100%;">
+                <canvas id="precipitation-chart"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <form id="prediction-form">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="State">
+                  State / Subdivision
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Supported Indian region profiles. Autofilled by closest GPS centroid.</span>
+                  </span>
+                </label>
+                <select id="State" name="State" class="form-input" required style="background: #111827; color: #fff;">
+                  <option value="" disabled selected>Select Region</option>
+                  {% for state in states %}
+                    <option value="{{ state }}">{{ state }}</option>
+                  {% endfor %}
+                </select>
+                <span id="state-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Annual_Rainfall">
+                  Annual Rainfall (mm)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 300 to 7000 mm. Mean annual precipitation.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Annual_Rainfall" name="Annual_Rainfall" class="form-input" placeholder="e.g. 2100" required>
+                <span id="annual-rainfall-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Seasonal_Rainfall">
+                  Seasonal Rainfall (mm)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 100 to 5000 mm. Active monsoon/seasonal precipitation sum.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Seasonal_Rainfall" name="Seasonal_Rainfall" class="form-input" placeholder="e.g. 1450" required>
+                <span id="seasonal-rainfall-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Cloud_Cover">
+                  Cloud Cover (%)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 100%. Relative portion of sky covered by clouds.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Cloud_Cover" name="Cloud_Cover" class="form-input" placeholder="e.g. 45" required>
+                <span id="cloud-cover-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Temperature">
+                  Temperature (°C)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: -10 to 50 °C. Ambient air temperature.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Temperature" name="Temperature" class="form-input" placeholder="e.g. 28.5" required>
+                <span id="temperature-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Humidity">
+                  Humidity (%)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 100%. Represents water vapor levels.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Humidity" name="Humidity" class="form-input" placeholder="e.g. 78" required>
+                <span id="humidity-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="River_Water_Level">
+                  River Water Level (m)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 20 m. Stage height of local rivers.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="River_Water_Level" name="River_Water_Level" class="form-input" placeholder="e.g. 5.2" required>
+                <span id="river-water-level-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Drainage_Capacity">
+                  Drainage Capacity (%)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 100%. Effectiveness of local runoff drainage systems.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Drainage_Capacity" name="Drainage_Capacity" class="form-input" placeholder="e.g. 60" required>
+                <span id="drainage-capacity-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Water_Flow">
+                  Water Flow (cumecs)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 2000. Discharge rate of flowing surface water.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Water_Flow" name="Water_Flow" class="form-input" placeholder="e.g. 420" required>
+                <span id="water-flow-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Reservoir_Level">
+                  Reservoir Level (%)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 100%. Capacity storage level of nearby reservoirs.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Reservoir_Level" name="Reservoir_Level" class="form-input" placeholder="e.g. 65" required>
+                <span id="reservoir-level-error" class="input-error"></span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="Soil_Moisture">
+                  Soil Moisture (%)
+                  <span class="tooltip">ℹ️
+                    <span class="tooltiptext">Expected range: 0 to 100%. Volumetric water content in topsoil.</span>
+                  </span>
+                </label>
+                <input type="number" step="any" id="Soil_Moisture" name="Soil_Moisture" class="form-input" placeholder="e.g. 56" required>
+                <span id="soil-moisture-error" class="input-error"></span>
+              </div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="submit" id="btn-submit-predict" class="btn-primary">Execute Analysis</button>
+              <button type="reset" class="btn-secondary">Clear Fields</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Section: Interactive Results & History -->
+        <div class="glass-card result-sidebar-card" id="result-sidebar">
+          <h2 class="form-title" style="font-size: 1.5rem; text-align: left; margin-bottom: 0.5rem;">Analysis Report</h2>
+          <p class="form-subtitle" style="text-align: left; margin-bottom: 1.5rem;">Real-time inference signals and historical run details.</p>
+          
+          <div id="result-status-wrapper" class="result-status-box idle">
+            <div class="status-indicator">
+              <span class="status-pulse"></span>
+              <span id="result-status-text">Awaiting Parameter Submission...</span>
+            </div>
+            
+            <div id="result-metrics" style="display: none; margin-top: 1.5rem;">
+              <div class="metric-row">
+                <span class="metric-label">Flood Probability</span>
+                <span id="metric-prob-val" class="metric-value">0%</span>
+              </div>
+              <div class="probability-bar-container">
+                <div id="probability-bar-fill" class="probability-bar-fill" style="width: 0%;"></div>
+              </div>
+              
+              <div class="metric-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem;">
+                <div class="metric-tile">
+                  <span class="tile-label">Confidence</span>
+                  <span id="metric-confidence" class="tile-value">-</span>
+                </div>
+                <div class="metric-tile">
+                  <span class="tile-label">Model Pipeline</span>
+                  <span id="metric-model" class="tile-value">XGBoost</span>
+                </div>
+              </div>
+              
+              <div class="explanation-box" style="margin-top: 1.5rem;">
+                <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Scientific Assessment:</h4>
+                <p id="explanation-text" style="font-size: 0.88rem; line-height: 1.5; color: var(--text-secondary);"></p>
+              </div>
+              
+              <!-- Mitigation & Evacuation Guidelines (Dynamically Managed) -->
+              <div class="explanation-box" id="mitigation-plan-box" style="margin-top: 1.5rem; display: none; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                <h4 id="mitigation-title" style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;"></h4>
+                <ul id="mitigation-list" style="font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary); padding-left: 1.2rem; margin: 0; display: flex; flex-direction: column; gap: 0.4rem;">
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <!-- History Tracker -->
+          <div class="history-tracker-section" style="margin-top: 2.5rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+              ⏳ Local Prediction History
+            </h3>
+            <div id="history-empty" class="history-empty-text">No runs in this session yet.</div>
+            <ul id="history-list" class="history-list" style="display: none;">
+              <!-- History items will be injected by JS -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

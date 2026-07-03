@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Flood Prediction & Mitigation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in">
+      <div class="hero-content">
+        <h1 class="hero-title">Predict and Mitigate <span>Flood Risks</span> with Machine Learning</h1>
+        <p class="hero-subtitle">An intelligent early-warning framework leveraging historical weather, geographic indices, and real-time sensor features to assess local flood hazards with high fidelity.</p>
+        
+        <div class="hero-actions">
+          <a href="/Predict" class="btn-primary">Predict Floods</a>
+        </div>
+        
+        <div class="hero-features">
+          <div class="feature-box">
+            <div class="feature-icon">📊</div>
+            <h3 class="feature-title">Data-Driven Insights</h3>
+            <p class="feature-desc">Utilizes parameters including rainfall, soil saturation, river stage height, and reservoir levels.</p>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon">⚡</div>
+            <h3 class="feature-title">Real-time Forecast</h3>
+            <p class="feature-desc">Instant hazard classification using pre-trained machine learning model pipeline.</p>
+          </div>
+          <div class="feature-box">
+            <div class="feature-icon">🛡</div>
+            <h3 class="feature-title">Mitigation Planning</h3>
+            <p class="feature-desc">Provides action-oriented precautions and recommendations based on risk results.</p>
+          </div>
+        </div>
+
+        <div class="context-section">
+          <h2>System Context & Database Schema</h2>
+          <div class="context-grid">
+            <div class="context-card">
+              <h3>Target Predictors</h3>
+              <p>The system digests ten core hydrological and climate features for prediction:</p>
+              <ul class="schema-list">
+                <li><strong>Annual Rainfall (mm):</strong> Total yearly precipitation metrics.</li>
+                <li><strong>Seasonal Rainfall (mm):</strong> Monsoon or seasonal cumulative precipitation.</li>
+                <li><strong>Cloud Cover (%):</strong> Portion of sky covered by clouds.</li>
+                <li><strong>Humidity (%):</strong> Relative air moisture index.</li>
+                <li><strong>Temperature (°C):</strong> Mean ambient temperature reading.</li>
+                <li><strong>River Water Level (m):</strong> Stage height of local rivers.</li>
+                <li><strong>Drainage Capacity (%):</strong> Runoff capacity effectiveness.</li>
+                <li><strong>Water Flow (cumecs):</strong> Discharge rate of surface water flow.</li>
+                <li><strong>Reservoir Level (%):</strong> Current capacity of reservoirs.</li>
+                <li><strong>Soil Moisture (%):</strong> Volumetric water content in soil.</li>
+              </ul>
+            </div>
+            <div class="context-card">
+              <h3>Prediction Pipeline Flow</h3>
+              <p>Our machine learning pipeline enforces rigorous preprocessing and evaluation:</p>
+              <ul class="schema-list">
+                <li><strong>Feature Inputs:</strong> Captured via UI or real-time climate telemetry.</li>
+                <li><strong>Feature Scaling:</strong> Normalized using a pre-trained StandardScaler.</li>
+                <li><strong>Model Architecture:</strong> Evaluated with ensemble algorithms optimized for extreme weather indicators.</li>
+                <li><strong>Trigger Alert:</strong> Redirects to warning status page with instant safety drills and advice.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+</body>
+</html>
+

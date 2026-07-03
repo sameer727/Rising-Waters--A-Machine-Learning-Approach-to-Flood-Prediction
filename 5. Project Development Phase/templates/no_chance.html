@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Safe Status</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in">
+      <div class="result-card safe">
+        <div class="result-icon">🛡️</div>
+        <h1 class="result-status">LOW FLOOD RISK: {{ prob }}%</h1>
+        <p class="result-message">Based on the provided meteorological telemetry, our machine learning model indicates that conditions are currently stable, with only an estimated <strong>{{ prob }}%</strong> probability of flood risk.</p>
+        
+        <div class="info-section">
+          <h2 class="info-title">💚 Routine Maintenance & Best Practices</h2>
+          <ul class="info-list">
+            <li><strong>Stay Informed:</strong> Continue monitoring local weather forecasts for sudden climate updates or seasonal variations.</li>
+            <li><strong>Drainage Clearance:</strong> Ensure gutters, storm drains, and downspouts are kept clear of leaves, debris, and blockages.</li>
+            <li><strong>Standard Precautions:</strong> Maintain standard emergency kits and stay aware of general emergency response protocols.</li>
+            <li><strong>Soil Health:</strong> Keep vegetation and ground cover well-maintained to encourage natural water absorption.</li>
+          </ul>
+        </div>
+        
+        <div class="result-actions">
+          <a href="/Predict" class="btn-primary">Predict Again</a>
+          <a href="/" class="btn-secondary">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+</body>
+</html>

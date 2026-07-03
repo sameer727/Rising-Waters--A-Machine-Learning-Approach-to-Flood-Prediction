@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rising Waters - Register</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header>
+    <div class="nav-container">
+      <a href="/" class="logo">RISING WATERS</a>
+      <nav class="nav-links">
+        {% if 'user_id' in session %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/dashboard" class="{{ 'active' if request.path == '/dashboard' else '' }}">Dashboard</a>
+          {% if session['role'] in ['Admin', 'Meteorologist', 'Local Authority', 'Normal User'] %}
+            <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict Flood</a>
+          {% endif %}
+          <a href="/history" class="{{ 'active' if request.path == '/history' else '' }}">History</a>
+          <a href="/profile" class="{{ 'active' if request.path == '/profile' else '' }}">Profile</a>
+          {% if session['role'] == 'Admin' %}
+            <a href="/manage-users" class="{{ 'active' if request.path == '/manage-users' else '' }}">Manage Users</a>
+          {% endif %}
+          <a href="/logout">Logout</a>
+        {% else %}
+          <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+          <a href="/Predict" class="{{ 'active' if request.path == '/Predict' else '' }}">Predict</a>
+          <a href="/login" class="{{ 'active' if request.path == '/login' else '' }}">Login</a>
+          <a href="/register" class="{{ 'active' if request.path == '/register' else '' }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container animate-fade-in" style="max-width: 550px; margin: 2rem auto;">
+      <div class="glass-card">
+        <h1 class="form-title">Create Account</h1>
+        <p class="form-subtitle">Register to unlock early-warning telemetry modeling and tracking dashboards.</p>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="location-status {{ 'success' if category == 'success' else 'error' }}" style="text-align: center; margin-bottom: 1.5rem; display: block;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form action="/register" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label" for="User_Name">Full Name</label>
+            <input type="text" id="User_Name" name="User_Name" class="form-input" placeholder="John Doe" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="Email">Email Address</label>
+            <input type="email" id="Email" name="Email" class="form-input" placeholder="john.doe@organization.com" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="Password">Password</label>
+            <input type="password" id="Password" name="Password" class="form-input" placeholder="Min. 6 characters" required minlength="6">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="Role">Organization Role</label>
+            <select id="Role" name="Role" class="form-input" required style="background: #111827; color: #fff;">
+              <option value="" disabled selected>Select Role</option>
+              <option value="Normal User">Normal User</option>
+              <option value="Meteorologist">Meteorologist</option>
+              <option value="Disaster Management Officer">Disaster Management Officer</option>
+              <option value="Local Authority">Local Authority</option>
+            </select>
+          </div>
+
+          <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 0;">
+            <div class="form-group">
+              <label class="form-label" for="Phone_Number">Phone Number</label>
+              <input type="text" id="Phone_Number" name="Phone_Number" class="form-input" placeholder="+91 98765 43210">
+            </div>
+            
+            <div class="form-group" id="organization-group">
+              <label class="form-label" for="Organization">Organization</label>
+              <input type="text" id="Organization" name="Organization" class="form-input" placeholder="National Weather Service" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="margin-top: 1rem; width: 100%;">Create Account</button>
+        </form>
+        
+        <p style="margin-top: 1.5rem; text-align: center; font-size: 0.88rem; color: var(--text-secondary);">
+          Already have an account? <a href="/login" style="color: var(--accent-blue); text-decoration: none; font-weight: 500;">Log in here</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Rising Waters Flood Prediction. All rights reserved.</p>
+  </footer>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const roleSelect = document.getElementById('Role');
+      const orgGroup = document.getElementById('organization-group');
+      const orgInput = document.getElementById('Organization');
+      const formGrid = document.querySelector('.form-grid');
+
+      const toggleOrganizationField = () => {
+        if (roleSelect.value === 'Normal User') {
+          orgGroup.style.display = 'none';
+          orgInput.required = false;
+          orgInput.value = ''; // clear input
+          if (formGrid) {
+            formGrid.style.gridTemplateColumns = '1fr';
+          }
+        } else {
+          orgGroup.style.display = 'block';
+          orgInput.required = true;
+          if (formGrid) {
+            formGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+          }
+        }
+      };
+
+      if (roleSelect) {
+        roleSelect.addEventListener('change', toggleOrganizationField);
+        toggleOrganizationField(); // run once on load
+      }
+    });
+  </script>
+</body>
+</html>

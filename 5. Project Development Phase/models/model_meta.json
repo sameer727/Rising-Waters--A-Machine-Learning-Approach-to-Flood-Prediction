@@ -1,0 +1,29 @@
+{
+    "best_model": "Random Forest",
+    "features_sequence": [
+        "Annual Rainfall",
+        "Seasonal Rainfall",
+        "Cloud Cover",
+        "Humidity",
+        "Temperature",
+        "River Water Level",
+        "Drainage Capacity",
+        "Water Flow",
+        "Reservoir Level",
+        "Soil Moisture"
+    ],
+    "test_metrics": {
+        "Accuracy": 0.971444
+    },
+    "all_models_comparison": {
+        "Decision Tree": {
+            "Accuracy": 0.9498
+        },
+        "Random Forest": {
+            "Accuracy": 0.976
+        },
+        "XGBoost": {
+            "Accuracy": 0.971444
+        }
+    }
+}
